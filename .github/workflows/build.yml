@@ -1,41 +1,66 @@
-name: Build Miracle Klipper Debian rootfs
+name: Validate and build Miracle Klipper Debian rootfs
 
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
     inputs:
       suite:
-        description: Debian release codename
+        description: Debian suite
         required: true
         default: bookworm
         type: choice
-        options:
-          - bookworm
+        options: [bookworm]
       architecture:
         description: Target architecture
         required: true
         default: arm64
         type: choice
-        options:
-          - amd64
-          - arm64
-          - armhf
+        options: [amd64, arm64, armhf]
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Check shell syntax
+        run: |
+          bash -n scripts/build-rootfs.sh
+          bash -n scripts/setup-rootfs.sh
+      - name: Static checks
+        run: |
+          test -s README.md
+          test -s scripts/build-rootfs.sh
+          test -s scripts/setup-rootfs.sh
+          test -s .github/workflows/build.yml
+          ! grep -RniE 'fluidd|fluidd\.xyz' scripts README.md
+          grep -q 'mainsail-crew/mainsail' scripts/setup-rootfs.sh
+          grep -q 'klipper.service' scripts/setup-rootfs.sh
+          grep -q 'moonraker.service' scripts/setup-rootfs.sh
 
+  build:
+    if: github.event_name == 'workflow_dispatch'
+    needs: validate
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Install rootfs tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y debootstrap qemu-user-static binfmt-support rsync xz-utils
-
+          sudo apt-get install -y debootstrap qemu-user-static binfmt-support xz-utils
+      - name: Configure QEMU binfmt
+        run: |
+          sudo update-binfmts --enable qemu-aarch64 || true
+          sudo update-binfmts --enable qemu-arm || true
       - name: Build rootfs
         run: |
           sudo env ARCH="${{ inputs.architecture }}" DEBIAN_SUITE="${{ inputs.suite }}" ./scripts/build-rootfs.sh
-
       - name: Upload rootfs archive
         uses: actions/upload-artifact@v4
         with:
