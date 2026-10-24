@@ -7,8 +7,8 @@ bash -n scripts/setup-rootfs.sh
 grep -q 'mainsail-crew/mainsail' scripts/setup-rootfs.sh
 grep -q 'klipper.service' scripts/setup-rootfs.sh
 grep -q 'moonraker.service' scripts/setup-rootfs.sh
-if grep -RniE 'fluidd|fluidd\.xyz' README.md scripts; then
-  echo "Fluidd reference found but this project must be Mainsail-only." >&2
+if grep -RniE 'https?://[^ ]*fluidd|git clone[^\n]*fluidd|/var/www/fluidd' scripts; then
+  echo "Fluidd installation reference found but this project must be Mainsail-only." >&2
   exit 1
 fi
 grep -q 'systemd systemd-sysv' scripts/setup-rootfs.sh
