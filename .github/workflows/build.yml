@@ -20,7 +20,7 @@ on:
         options: [amd64, arm64, armhf]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
@@ -52,8 +52,22 @@ jobs:
       - name: Upload rootfs archive
         uses: actions/upload-artifact@v4
         with:
-          name: miracle-klipper-debian-${{ inputs.suite }}-${{ inputs.architecture }}
+          name: miracle-klipper-debian-${{ inputs.suite || 'bookworm' }}-${{ inputs.architecture || 'arm64' }}
           path: |
             dist/*.tar.xz
             dist/*.sha256
           if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v0.1.0"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; skipping publication."
+          else
+            gh release create "$TAG" dist/*.tar.xz dist/*.sha256 \
+              --title "Miracle Klipper v0.1.0" \
+              --notes "Première version publiée de Miracle Klipper. Image rootfs Debian Bookworm ARM64 construite et validée par GitHub Actions. Archive compressée au format .tar.xz accompagnée de son fichier SHA-256."
+          fi
