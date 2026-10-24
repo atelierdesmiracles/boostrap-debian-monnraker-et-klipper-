@@ -1,0 +1,46 @@
+name: Build Miracle Klipper Debian rootfs
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Debian release codename
+        required: true
+        default: bookworm
+        type: choice
+        options:
+          - bookworm
+      architecture:
+        description: Target architecture
+        required: true
+        default: arm64
+        type: choice
+        options:
+          - amd64
+          - arm64
+          - armhf
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install rootfs tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y debootstrap qemu-user-static binfmt-support rsync xz-utils
+
+      - name: Build rootfs
+        run: |
+          sudo env ARCH="${{ inputs.architecture }}" DEBIAN_SUITE="${{ inputs.suite }}" ./scripts/build-rootfs.sh
+
+      - name: Upload rootfs archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: miracle-klipper-debian-${{ inputs.suite }}-${{ inputs.architecture }}
+          path: |
+            dist/*.tar.xz
+            dist/*.sha256
+          if-no-files-found: error
