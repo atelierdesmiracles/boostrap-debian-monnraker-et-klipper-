@@ -1,48 +1,52 @@
 # Miracle Klipper — Debian Bootstrap
 
-Bootstrap Debian pour préparer un environnement Klipper + Moonraker + Mainsail. Fluidd n'est pas installé.
+Construction d'un rootfs Debian pour héberger **Klipper + Moonraker + Mainsail**. **Fluidd n'est pas installé.**
 
-## Objectif
+## Composants
 
-- Construire un rootfs Debian minimal pour une architecture cible.
-- Installer les dépendances nécessaires à Klipper, Moonraker, la compilation du firmware et la communication série.
-- Installer Klipper et Moonraker dans des environnements Python isolés.
-- Déployer Mainsail derrière Nginx.
-- Préparer les unités systemd, les répertoires persistants et les contrôles de santé.
+- Debian 12 Bookworm minimal, architectures `amd64`, `arm64`, `armhf`
+- Klipper et ses dépendances Python dans un environnement virtuel
+- Moonraker et ses dépendances Python dans un environnement virtuel
+- Mainsail servi sur HTTP par Nginx
+- Services systemd pour Klipper et Moonraker
+- Outils de compilation firmware et utilitaires USB/série
+- Archive rootfs `.tar.xz` accompagnée d'une somme SHA-256
 
-## Important
+## Construire localement
 
-Le script de construction crée une archive rootfs destinée à être testée dans un environnement Debian compatible. Il ne crée pas à lui seul une image disque amorçable. Pour un appareil réel, la configuration du noyau, du bootloader, du stockage, du réseau et des périphériques dépend de la cible.
-
-La version initiale cible Debian 12 (Bookworm) et les architectures prises en charge par Debian debootstrap. La construction doit être exécutée sur Linux avec les outils requis et une connexion Internet. Pour une architecture étrangère à l'hôte, installer/configurer QEMU user-mode et binfmt_misc.
-
-## Arborescence
-
-- `scripts/build-rootfs.sh` : construit le rootfs Debian et y exécute la préparation.
-- `scripts/setup-rootfs.sh` : installe Klipper, Moonraker, Mainsail, Nginx, les dépendances et les services.
-- `.github/workflows/build.yml` : construit les archives pour les architectures configurées.
-
-## Construction locale
+Sur un hôte Debian/Ubuntu Linux :
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y debootstrap qemu-user-static binfmt-support rsync xz-utils git
-sudo ARCH=arm64 ./scripts/build-rootfs.sh
+sudo apt-get install -y debootstrap qemu-user-static binfmt-support xz-utils git
+sudo env ARCH=arm64 ./scripts/build-rootfs.sh
 ```
 
-Architectures prévues : `amd64`, `arm64`, `armhf`. Vérifier l'architecture de la carte cible avant de choisir.
+L'archive apparaît dans `dist/`. `ARCH` accepte `amd64`, `arm64` ou `armhf`. Pour une architecture étrangère à l'hôte, l'exécution nécessite QEMU user-mode configuré par binfmt_misc.
+
+## Construire avec GitHub Actions
+
+Dans l'onglet **Actions**, lance **Validate and build Miracle Klipper Debian rootfs** avec *Run workflow* et choisis l'architecture. La validation shell/statique est également exécutée sur les push vers `main` et les pull requests; la construction complète est déclenchée manuellement.
 
 ## Après déploiement
 
-- Mainsail : port HTTP 80
-- Moonraker : port 7125 (à garder sur le réseau de confiance ou derrière un mécanisme d'authentification/proxy approprié)
-- Klipper : service local, accès à la carte via le port série configuré
+- Interface Mainsail : port 80
+- Moonraker : port 7125 lié par défaut à `127.0.0.1`; utiliser le proxy Nginx local
+- Klipper : socket Unix interne et port série défini dans `/home/klipper/printer_data/config/printer.cfg`
 
-La sécurité réseau doit être configurée avant toute exposition à Internet. Ne pas exposer directement Moonraker sur Internet.
+Le rootfs **n'est pas une image disque amorçable** : il ne contient pas de partitionnement, de noyau spécifique à une carte ni de bootloader. L'intégration matérielle est une étape distincte.
+
+## Configuration obligatoire de l'imprimante
+
+Avant usage, adapter `printer.cfg` à la carte électronique, au port série et aux broches réelles. Le fichier de départ n'est pas une configuration complète d'imprimante et Klipper peut rester en erreur tant que la configuration matérielle n'est pas finalisée.
+
+## Sécurité
+
+Ne pas exposer Moonraker directement à Internet. Configurer un contrôle d'accès/authentification et limiter l'interface au réseau de confiance. Réviser la configuration réseau selon l'installation finale.
 
 ## Références
 
-- Octo4a bootstrap builder (inspiration pour le processus rootfs / scripts / CI) : https://github.com/feelfreelinux/octo4a-bootstrap-builder
+- Bootstrap d'inspiration : https://github.com/feelfreelinux/octo4a-bootstrap-builder
 - Klipper : https://github.com/Klipper3d/klipper
 - Moonraker : https://github.com/Arksine/moonraker
 - Mainsail : https://github.com/mainsail-crew/mainsail
