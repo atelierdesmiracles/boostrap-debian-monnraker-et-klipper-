@@ -24,6 +24,8 @@ sudo env ARCH=arm64 ./scripts/build-rootfs.sh
 
 L'archive apparaît dans `dist/`. `ARCH` accepte `amd64`, `arm64` ou `armhf`. Pour une architecture étrangère à l'hôte, l'exécution nécessite QEMU user-mode configuré par binfmt_misc.
 
+Le contrôle local des scripts se lance avec `./tests/validate.sh` (syntaxe Bash, présence des composants attendus et absence de Fluidd).
+
 ## Construire avec GitHub Actions
 
 Dans l'onglet **Actions**, lance **Validate and build Miracle Klipper Debian rootfs** avec *Run workflow* et choisis l'architecture. La validation shell/statique est également exécutée sur les push vers `main` et les pull requests; la construction complète est déclenchée manuellement.
