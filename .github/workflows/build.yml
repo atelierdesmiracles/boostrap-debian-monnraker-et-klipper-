@@ -28,20 +28,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Check shell syntax
-        run: |
-          bash -n scripts/build-rootfs.sh
-          bash -n scripts/setup-rootfs.sh
-      - name: Static checks
-        run: |
-          test -s README.md
-          test -s scripts/build-rootfs.sh
-          test -s scripts/setup-rootfs.sh
-          test -s .github/workflows/build.yml
-          ! grep -RniE 'fluidd|fluidd\.xyz' scripts README.md
-          grep -q 'mainsail-crew/mainsail' scripts/setup-rootfs.sh
-          grep -q 'klipper.service' scripts/setup-rootfs.sh
-          grep -q 'moonraker.service' scripts/setup-rootfs.sh
+      - name: Validate shell scripts and project constraints
+        run: ./tests/validate.sh
 
   build:
     if: github.event_name == 'workflow_dispatch'
@@ -54,7 +42,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y debootstrap qemu-user-static binfmt-support xz-utils
-      - name: Configure QEMU binfmt
+      - name: Enable foreign architecture emulators
         run: |
           sudo update-binfmts --enable qemu-aarch64 || true
           sudo update-binfmts --enable qemu-arm || true
