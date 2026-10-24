@@ -17,8 +17,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p dist
-          gh run download 40090771585 --repo "$GITHUB_REPOSITORY" --dir dist
+          mkdir -p download dist
+          gh run download 40090771585 --repo "$GITHUB_REPOSITORY" --dir download
+          find download -type f -maxdepth 3 -print
+          find download -type f \( -name '*.tar.xz' -o -name '*.sha256' \) -exec cp {} dist/ \;
           ls -lh dist
           test -n "$(find dist -maxdepth 1 -name '*.tar.xz' -print -quit)"
           test -n "$(find dist -maxdepth 1 -name '*.sha256' -print -quit)"
