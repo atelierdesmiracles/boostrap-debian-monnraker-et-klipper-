@@ -37,7 +37,7 @@ echo "==> Creating Debian $SUITE rootfs ($ARCH)"
 if [[ "$ARCH" == "$HOST_ARCH" ]]; then
   debootstrap --variant=minbase --arch="$ARCH" "$SUITE" "$ROOTFS" "$MIRROR"
 else
-  if [[ "$ARCH" != amd64 && ! -x "/usr/bin/$QEMU_BIN" ]]; then
+  if [[ ! -x "/usr/bin/$QEMU_BIN" ]]; then
     echo "Missing /usr/bin/$QEMU_BIN; install qemu-user-static and enable binfmt_misc." >&2
     exit 1
   fi
