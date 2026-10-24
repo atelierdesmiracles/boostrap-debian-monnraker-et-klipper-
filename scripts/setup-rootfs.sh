@@ -5,7 +5,7 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 apt-get update
 apt-get install -y --no-install-recommends \
-  ca-certificates curl git wget nginx-light sudo \
+  ca-certificates curl git wget unzip nginx-light sudo \
   python3 python3-venv python3-dev python3-pip \
   build-essential gcc g++ make cmake pkg-config \
   libffi-dev libjpeg-dev zlib1g-dev libusb-1.0-0-dev \
