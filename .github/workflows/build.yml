@@ -64,6 +64,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="v0.1.0"
-          gh release create "$TAG" dist/*.tar.xz dist/*.sha256 \
-            --title "Miracle Klipper v0.1.0" \
-            --notes "Première version publiée de Miracle Klipper. Image rootfs Debian Bookworm ARM64 construite et validée par GitHub Actions. Archive compressée au format .tar.xz accompagnée de son fichier SHA-256."
+          NOTES="Première version publiée de Miracle Klipper. Image rootfs Debian Bookworm ARM64 construite et validée par GitHub Actions. Archive compressée au format .tar.xz accompagnée de son fichier SHA-256."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/*.tar.xz dist/*.sha256 --clobber
+          else
+            gh release create "$TAG" dist/*.tar.xz dist/*.sha256 \
+              --title "Miracle Klipper v0.1.0" \
+              --notes "$NOTES"
+          fi
