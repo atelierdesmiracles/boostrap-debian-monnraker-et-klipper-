@@ -3,7 +3,12 @@ set -Eeuo pipefail
 export DEBIAN_FRONTEND=noninteractive
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-# Keep build dependencies in the rootfs so Klipper's firmware tools are usable.
+# Pin upstream source revisions for reproducible builds.
+KLIPPER_REF="${KLIPPER_REF:-master}"
+MOONRAKER_REF="${MOONRAKER_REF:-master}"
+MAINSAIL_VERSION="${MAINSAIL_VERSION:-v2.19.0}"
+MAINSAIL_RELEASE_URL="https://github.com/mainsail-crew/mainsail/releases/download/${MAINSAIL_VERSION}/mainsail.zip"
+
 apt-get update
 apt-get install -y --no-install-recommends \
   systemd systemd-sysv dbus ca-certificates curl git wget unzip nginx-light \
@@ -14,7 +19,6 @@ apt-get install -y --no-install-recommends \
   avrdude dfu-util stm32flash \
   util-linux usbutils udev sudo locales tzdata xz-utils
 
-# Stable locale; do not make locale generation fatal on minimal environments.
 if [[ -f /etc/locale.gen ]]; then
   sed -i 's/^# *en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen || true
   locale-gen en_US.UTF-8 || true
@@ -34,9 +38,8 @@ install -d -o klipper -g klipper \
   /home/klipper/printer_data/comms
 install -d -o root -g root /opt /var/www/mainsail
 
-# Download sources. For release images, pin tags/commits in a lock file.
-git clone --depth 1 https://github.com/Klipper3d/klipper.git /opt/klipper
-git clone --depth 1 https://github.com/Arksine/moonraker.git /opt/moonraker
+git clone --depth 1 --branch "$KLIPPER_REF" https://github.com/Klipper3d/klipper.git /opt/klipper
+git clone --depth 1 --branch "$MOONRAKER_REF" https://github.com/Arksine/moonraker.git /opt/moonraker
 
 python3 -m venv /opt/klipper-venv
 /opt/klipper-venv/bin/pip install --no-cache-dir --upgrade pip wheel
@@ -59,7 +62,6 @@ enable_object_processing: True
 [authorization]
 trusted_clients:
   127.0.0.1
-  127.0.0.0/8
   ::1/128
 cors_domains:
   localhost
@@ -129,12 +131,9 @@ PrivateTmp=true
 WantedBy=multi-user.target
 EOF
 
-# Install only Mainsail (no Fluidd).
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
-curl -fL --retry 3 --retry-delay 2 \
-  https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip \
-  -o "$TMP_DIR/mainsail.zip"
+curl -fL --retry 3 --retry-delay 2 "$MAINSAIL_RELEASE_URL" -o "$TMP_DIR/mainsail.zip"
 unzip -q "$TMP_DIR/mainsail.zip" -d /var/www/mainsail
 test -s /var/www/mainsail/index.html || { echo "Mainsail archive did not contain index.html" >&2; exit 1; }
 chown -R root:root /var/www/mainsail
@@ -146,7 +145,8 @@ server {
     server_name _;
     root /var/www/mainsail;
     index index.html;
-    client_max_body_size 0;
+    # Configure a suitable cap for your workload; do not disable limits by default.
+    client_max_body_size 2g;
 
     location / {
         try_files $uri $uri/ /index.html;
@@ -174,8 +174,6 @@ EOF
 rm -f /etc/nginx/sites-enabled/default
 ln -sf /etc/nginx/sites-available/mainsail /etc/nginx/sites-enabled/mainsail
 nginx -t
-
-# enable symlinks by systemd preset tool; runtime start is handled at boot.
 systemctl enable klipper.service moonraker.service nginx.service
 
 apt-get clean
