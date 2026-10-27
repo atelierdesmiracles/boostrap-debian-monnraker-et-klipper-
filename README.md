@@ -46,6 +46,10 @@ Avant usage, adapter `printer.cfg` à la carte électronique, au port série et 
 
 Ne pas exposer Moonraker directement à Internet. Configurer un contrôle d'accès/authentification et limiter l'interface au réseau de confiance. Réviser la configuration réseau selon l'installation finale.
 
+## Architecture et feuille de route
+
+Consulter [docs/ARCHITECTURE-INTEGRATION.md](docs/ARCHITECTURE-INTEGRATION.md) pour l'analyse des composants upstream, les risques identifiés, l'architecture cible et les phases de développement de Miracle Klipper.
+
 ## Références
 
 - Bootstrap d'inspiration : https://github.com/feelfreelinux/octo4a-bootstrap-builder
