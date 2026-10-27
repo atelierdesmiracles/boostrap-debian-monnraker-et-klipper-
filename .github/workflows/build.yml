@@ -20,7 +20,7 @@ on:
         options: [amd64, arm64, armhf]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   validate:
@@ -35,6 +35,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     needs: validate
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,7 +50,7 @@ jobs:
           sudo update-binfmts --enable qemu-arm || true
       - name: Build rootfs
         run: |
-          sudo env ARCH="${{ inputs.architecture }}" DEBIAN_SUITE="${{ inputs.suite }}" bash ./scripts/build-rootfs.sh
+          sudo env ARCH="${{ inputs.architecture || 'arm64' }}" DEBIAN_SUITE="${{ inputs.suite || 'bookworm' }}" bash ./scripts/build-rootfs.sh
       - name: Upload rootfs archive
         uses: actions/upload-artifact@v4
         with:
@@ -58,17 +60,31 @@ jobs:
             dist/*.sha256
           if-no-files-found: error
 
-      - name: Publish GitHub Release
-        if: github.event_name == 'push'
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download rootfs artifact from this workflow run
+        uses: actions/download-artifact@v4
+        with:
+          pattern: miracle-klipper-debian-*
+          path: dist
+          merge-multiple: true
+      - name: Verify SHA-256 sums
+        run: |
+          cd dist
+          sha256sum --check *.sha256
+      - name: Publish tagged release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v0.1.0"
-          NOTES="Première version publiée de Miracle Klipper. Image rootfs Debian Bookworm ARM64 construite et validée par GitHub Actions. Archive compressée au format .tar.xz accompagnée de son fichier SHA-256."
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" dist/*.tar.xz dist/*.sha256 --clobber
-          else
-            gh release create "$TAG" dist/*.tar.xz dist/*.sha256 \
-              --title "Miracle Klipper v0.1.0" \
-              --notes "$NOTES"
-          fi
+          gh release create "${GITHUB_REF_NAME}" dist/*.tar.xz dist/*.sha256 \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Miracle Klipper ${GITHUB_REF_NAME}" \
+            --generate-notes
