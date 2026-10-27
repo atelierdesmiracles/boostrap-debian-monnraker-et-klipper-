@@ -55,6 +55,8 @@ fi
 
 cp "$ROOT_DIR/scripts/setup-rootfs.sh" "$ROOTFS/tmp/miracle-setup-rootfs.sh"
 install -m 0644 "$ROOT_DIR/config/upstream-versions.env" "$ROOTFS/tmp/upstream-versions.env"
+install -d "$ROOTFS/tmp/miracle-configurator"
+cp -a "$ROOT_DIR/web/configurator/." "$ROOTFS/tmp/miracle-configurator/"
 chmod 0755 "$ROOTFS/tmp/miracle-setup-rootfs.sh"
 mount --bind /dev "$ROOTFS/dev"
 mount --bind /dev/pts "$ROOTFS/dev/pts"
@@ -63,6 +65,7 @@ mount -t sysfs sysfs "$ROOTFS/sys"
 MOUNTS_ACTIVE=1
 chroot "$ROOTFS" /tmp/miracle-setup-rootfs.sh
 rm -f "$ROOTFS/tmp/miracle-setup-rootfs.sh" "$ROOTFS/tmp/upstream-versions.env"
+rm -rf "$ROOTFS/tmp/miracle-configurator"
 cleanup
 MOUNTS_ACTIVE=0
 
