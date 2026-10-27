@@ -8,6 +8,7 @@ Construction d'un rootfs Debian pour héberger **Klipper + Moonraker + Mainsail*
 - Klipper et ses dépendances Python dans un environnement virtuel
 - Moonraker et ses dépendances Python dans un environnement virtuel
 - Mainsail servi sur HTTP par Nginx
+- Configurateur Web Miracle Klipper initial servi sous `/configurator/` (génération locale d'un brouillon `printer.cfg`)
 - Services systemd pour Klipper et Moonraker
 - Outils de compilation firmware et utilitaires USB/série
 - Archive rootfs `.tar.xz` accompagnée d'une somme SHA-256
@@ -28,11 +29,12 @@ Le contrôle local des scripts se lance avec `./tests/validate.sh` (syntaxe Bash
 
 ## Construire avec GitHub Actions
 
-Dans l'onglet **Actions**, lance **Validate and build Miracle Klipper Debian rootfs** avec *Run workflow* et choisis l'architecture. La validation shell/statique est également exécutée sur les push vers `main` et les pull requests; la construction complète est déclenchée manuellement.
+Dans l'onglet **Actions**, lance **Validate and build Miracle Klipper Debian rootfs** avec *Run workflow* et choisis l'architecture. La validation shell/statique est également exécutée sur les push vers `main` et les pull requests; la construction complète est déclenchée sur les push vers `main` et peut aussi être lancée manuellement. Les releases sont prévues sur les tags `v*`.
 
 ## Après déploiement
 
 - Interface Mainsail : port 80
+- Configurateur Miracle Klipper : `http://<adresse-du-serveur>/configurator/`
 - Moonraker : port 7125 lié par défaut à `127.0.0.1`; utiliser le proxy Nginx local
 - Klipper : socket Unix interne et port série défini dans `/home/klipper/printer_data/config/printer.cfg`
 
@@ -40,7 +42,7 @@ Le rootfs **n'est pas une image disque amorçable** : il ne contient pas de part
 
 ## Configuration obligatoire de l'imprimante
 
-Avant usage, adapter `printer.cfg` à la carte électronique, au port série et aux broches réelles. Le fichier de départ n'est pas une configuration complète d'imprimante et Klipper peut rester en erreur tant que la configuration matérielle n'est pas finalisée.
+Avant usage, adapter `printer.cfg` à la carte électronique, au port série et aux broches réelles. Le fichier de départ n'est pas une configuration complète d'imprimante et Klipper peut rester en erreur tant que la configuration matérielle n'est pas finalisée. Le configurateur Web est un MVP : il génère et télécharge un brouillon local, mais ne pousse pas encore de configuration vers Moonraker et ne valide pas les broches électriquement.
 
 ## Sécurité
 
