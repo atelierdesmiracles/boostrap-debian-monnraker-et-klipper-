@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>Miracle Klipper — Configurateur</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand-mark">MK</div>
+  <div><strong>Miracle Klipper</strong><small>Configurateur d’imprimante</small></div>
+  <span class="tag">MVP · local</span>
+</header>
+<main>
+  <section class="hero">
+    <p class="eyebrow">CONFIGURATION GUIDÉE</p>
+    <h1>Préparez votre <span>printer.cfg</span></h1>
+    <p>Renseignez les paramètres que vous connaissez, vérifiez les champs et exportez un fichier de départ. Les broches et paramètres matériels ne sont jamais inventés.</p>
+  </section>
+  <div class="notice"><strong>Important :</strong> ce configurateur génère un brouillon. Vérifiez le câblage, les broches et les limites mécaniques dans la documentation de votre carte avant de l’utiliser. Il ne pousse pas encore la configuration vers Moonraker.</div>
+  <form id="config-form">
+    <section class="panel">
+      <div class="panel-head"><span class="step">01</span><div><h2>Profil de base</h2><p>Identification et géométrie de la machine</p></div></div>
+      <div class="grid">
+        <label>Nom du profil<input id="profile" value="Mon imprimante" maxlength="60" required></label>
+        <label>Type de cinématique<select id="kinematics"><option value="cartesian">Cartesian</option><option value="corexy">CoreXY</option><option value="delta">Delta</option><option value="corexz">CoreXZ</option><option value="hybrid_corexy">Hybrid CoreXY</option><option value="hybrid_corexz">Hybrid CoreXZ</option></select></label>
+        <label>Largeur X (mm)<input id="xsize" type="number" min="1" max="2000" value="220" required></label>
+        <label>Profondeur Y (mm)<input id="ysize" type="number" min="1" max="2000" value="220" required></label>
+        <label>Hauteur Z (mm)<input id="zsize" type="number" min="1" max="2000" value="250" required></label>
+        <label>Port série MCU (facultatif)<input id="serial" placeholder="/dev/serial/by-id/..." spellcheck="false"></label>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><span class="step">02</span><div><h2>Paramètres de mouvement</h2><p>Les valeurs sont des exemples à confirmer pour votre machine.</p></div></div>
+      <div class="grid">
+        <label>Vitesse maximale (mm/s)<input id="velocity" type="number" min="1" max="1000" value="150" required></label>
+        <label>Accélération maximale (mm/s²)<input id="accel" type="number" min="1" max="100000" value="3000" required></label>
+        <label>Type d’extrudeur<select id="extruder"><option value="direct">Direct drive</option><option value="bowden">Bowden</option><option value="unknown">À définir</option></select></label>
+        <label>Type de sonde<select id="probe"><option value="none">Aucune / à définir</option><option value="bltouch">BLTouch / compatible</option><option value="inductive">Sonde inductive</option><option value=" klicky">Klicky / mécanique</option></select></label>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><span class="step">03</span><div><h2>Broches et sécurité</h2><p>À compléter depuis la documentation de votre carte.</p></div></div>
+      <div class="grid">
+        <label>Broche stepper X<input id="stepx" placeholder="Ex. PB13 — à confirmer"></label>
+        <label>Broche direction X<input id="dirx" placeholder="Ex. PB12 — à confirmer"></label>
+        <label>Broche enable X<input id="enablex" placeholder="Ex. !PB14 — à confirmer"></label>
+        <label>Broche endstop X<input id="endstopx" placeholder="Ex. ^PC0 — à confirmer"></label>
+      </div>
+      <p class="hint">Les champs de broches restent vides par défaut. N’utilisez pas des exemples sans les comparer au schéma de votre carte.</p>
+    </section>
+    <div class="actions">
+      <button class="secondary" type="button" id="preview-btn">Générer l’aperçu</button>
+      <button type="submit">Télécharger printer.cfg</button>
+    </div>
+  </form>
+  <section class="panel output-panel">
+    <div class="panel-head"><span class="step">04</span><div><h2>Aperçu du fichier</h2><p>Le fichier exporté inclut des commentaires de prudence et les sections non finalisées.</p></div></div>
+    <div id="status" class="status" role="status">Complétez le formulaire puis générez l’aperçu.</div>
+    <textarea id="output" spellcheck="false" aria-label="Aperçu printer.cfg" readonly></textarea>
+    <div class="actions"><button type="button" class="secondary" id="copy-btn">Copier le contenu</button></div>
+  </section>
+  <footer>Miracle Klipper · configurateur initial · génération locale dans le navigateur</footer>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
