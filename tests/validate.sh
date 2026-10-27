@@ -12,6 +12,11 @@ grep -Eq '^MOONRAKER_REF=[0-9a-f]{40}$' config/upstream-versions.env
 grep -Eq '^MAINSAIL_VERSION=v[0-9]+\.[0-9]+\.[0-9]+$' config/upstream-versions.env
 grep -q 'upstream-versions.env' scripts/build-rootfs.sh
 grep -q 'source "$VERSION_MANIFEST"' scripts/setup-rootfs.sh
+test -s web/configurator/index.html
+test -s web/configurator/style.css
+test -s web/configurator/app.js
+grep -q 'miracle-configurator' scripts/build-rootfs.sh
+grep -q 'location /configurator/' scripts/setup-rootfs.sh
 
 grep -q 'mainsail-crew/mainsail' scripts/setup-rootfs.sh
 grep -q 'klipper.service' scripts/setup-rootfs.sh
