@@ -54,6 +54,7 @@ else
 fi
 
 cp "$ROOT_DIR/scripts/setup-rootfs.sh" "$ROOTFS/tmp/miracle-setup-rootfs.sh"
+install -m 0644 "$ROOT_DIR/config/upstream-versions.env" "$ROOTFS/tmp/upstream-versions.env"
 chmod 0755 "$ROOTFS/tmp/miracle-setup-rootfs.sh"
 mount --bind /dev "$ROOTFS/dev"
 mount --bind /dev/pts "$ROOTFS/dev/pts"
@@ -61,7 +62,7 @@ mount -t proc proc "$ROOTFS/proc"
 mount -t sysfs sysfs "$ROOTFS/sys"
 MOUNTS_ACTIVE=1
 chroot "$ROOTFS" /tmp/miracle-setup-rootfs.sh
-rm -f "$ROOTFS/tmp/miracle-setup-rootfs.sh"
+rm -f "$ROOTFS/tmp/miracle-setup-rootfs.sh" "$ROOTFS/tmp/upstream-versions.env"
 cleanup
 MOUNTS_ACTIVE=0
 
