@@ -6,6 +6,7 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 # Pin upstream source revisions for reproducible builds.
 KLIPPER_REF="${KLIPPER_REF:-master}"
 MOONRAKER_REF="${MOONRAKER_REF:-master}"
+# Release builds should pass immutable commit SHAs instead of moving branch names.
 MAINSAIL_VERSION="${MAINSAIL_VERSION:-v2.19.0}"
 MAINSAIL_RELEASE_URL="https://github.com/mainsail-crew/mainsail/releases/download/${MAINSAIL_VERSION}/mainsail.zip"
 
