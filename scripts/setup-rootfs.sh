@@ -164,7 +164,7 @@ server {
     location /configurator/ {
         alias /var/www/miracle-configurator/;
         index index.html;
-        try_files $uri $uri/ =404;
+        try_files $request_filename =404;
     }
     # Configure a suitable cap for your workload; do not disable limits by default.
     client_max_body_size 2g;
