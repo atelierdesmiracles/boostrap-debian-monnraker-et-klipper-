@@ -41,7 +41,10 @@ install -d -o klipper -g klipper \
   /home/klipper/printer_data/logs \
   /home/klipper/printer_data/gcodes \
   /home/klipper/printer_data/comms
-install -d -o root -g root /opt /var/www/mainsail
+install -d -o root -g root /opt /var/www/mainsail /var/www/miracle-configurator
+if [[ -d /tmp/miracle-configurator ]]; then
+  cp -a /tmp/miracle-configurator/. /var/www/miracle-configurator/
+fi
 
 git clone --filter=blob:none https://github.com/Klipper3d/klipper.git /opt/klipper
 git -C /opt/klipper fetch --depth 1 origin "$KLIPPER_REF"
@@ -145,7 +148,7 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 curl -fL --retry 3 --retry-delay 2 "$MAINSAIL_RELEASE_URL" -o "$TMP_DIR/mainsail.zip"
 unzip -q "$TMP_DIR/mainsail.zip" -d /var/www/mainsail
 test -s /var/www/mainsail/index.html || { echo "Mainsail archive did not contain index.html" >&2; exit 1; }
-chown -R root:root /var/www/mainsail
+chown -R root:root /var/www/mainsail /var/www/miracle-configurator
 install -m 0644 "$VERSION_MANIFEST" /home/klipper/printer_data/config/upstream-versions.env 2>/dev/null || true
 
 cat > /etc/nginx/sites-available/mainsail <<'EOF'
@@ -155,6 +158,14 @@ server {
     server_name _;
     root /var/www/mainsail;
     index index.html;
+    location = /configurator {
+        return 301 /configurator/;
+    }
+    location /configurator/ {
+        alias /var/www/miracle-configurator/;
+        index index.html;
+        try_files $uri $uri/ =404;
+    }
     # Configure a suitable cap for your workload; do not disable limits by default.
     client_max_body_size 2g;
 
