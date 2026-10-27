@@ -3,10 +3,14 @@ set -Eeuo pipefail
 export DEBIAN_FRONTEND=noninteractive
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-# Pin upstream source revisions for reproducible builds.
-KLIPPER_REF="${KLIPPER_REF:-master}"
-MOONRAKER_REF="${MOONRAKER_REF:-master}"
-# Release builds should pass immutable commit SHAs instead of moving branch names.
+# Load the version manifest copied into the rootfs by build-rootfs.sh.
+VERSION_MANIFEST="/tmp/upstream-versions.env"
+if [[ -f "$VERSION_MANIFEST" ]]; then
+  # This file is maintained in the Miracle Klipper repository.
+  source "$VERSION_MANIFEST"
+fi
+KLIPPER_REF="${KLIPPER_REF:-ee2c6fb6b00b2b5d097ef70d0868df7d74943b51}"
+MOONRAKER_REF="${MOONRAKER_REF:-b559b9a81161f958a43c2f527b6ad96f73310d5d}"
 MAINSAIL_VERSION="${MAINSAIL_VERSION:-v2.19.0}"
 MAINSAIL_RELEASE_URL="https://github.com/mainsail-crew/mainsail/releases/download/${MAINSAIL_VERSION}/mainsail.zip"
 
@@ -39,8 +43,12 @@ install -d -o klipper -g klipper \
   /home/klipper/printer_data/comms
 install -d -o root -g root /opt /var/www/mainsail
 
-git clone --depth 1 --branch "$KLIPPER_REF" https://github.com/Klipper3d/klipper.git /opt/klipper
-git clone --depth 1 --branch "$MOONRAKER_REF" https://github.com/Arksine/moonraker.git /opt/moonraker
+git clone --filter=blob:none https://github.com/Klipper3d/klipper.git /opt/klipper
+git -C /opt/klipper fetch --depth 1 origin "$KLIPPER_REF"
+git -C /opt/klipper checkout --detach FETCH_HEAD
+git clone --filter=blob:none https://github.com/Arksine/moonraker.git /opt/moonraker
+git -C /opt/moonraker fetch --depth 1 origin "$MOONRAKER_REF"
+git -C /opt/moonraker checkout --detach FETCH_HEAD
 
 python3 -m venv /opt/klipper-venv
 /opt/klipper-venv/bin/pip install --no-cache-dir --upgrade pip wheel
@@ -138,6 +146,7 @@ curl -fL --retry 3 --retry-delay 2 "$MAINSAIL_RELEASE_URL" -o "$TMP_DIR/mainsail
 unzip -q "$TMP_DIR/mainsail.zip" -d /var/www/mainsail
 test -s /var/www/mainsail/index.html || { echo "Mainsail archive did not contain index.html" >&2; exit 1; }
 chown -R root:root /var/www/mainsail
+install -m 0644 "$VERSION_MANIFEST" /home/klipper/printer_data/config/upstream-versions.env 2>/dev/null || true
 
 cat > /etc/nginx/sites-available/mainsail <<'EOF'
 server {
